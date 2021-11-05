@@ -38,6 +38,8 @@ public:
     image_entry get_image_entry(const QString& name);
     image_entry get_image_entry(int id);
 
+    void setup_model(QWidget* parent);
+
 
 private:
 

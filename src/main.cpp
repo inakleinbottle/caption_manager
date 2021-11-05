@@ -19,10 +19,10 @@ int main(int argc, char* argv[])
     QCoreApplication::setApplicationName("Caption Manager");
     QCoreApplication::setApplicationVersion(CAPMAN_VERSION);
 
-    database_manager dbm("test.sqlite");
+    //database_manager dbm("test.sqlite");
 
 
-    caption_manager main_window;
+    caption_manager main_window("test.sqlite");
     main_window.show();
     return app.exec();
 

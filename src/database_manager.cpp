@@ -48,3 +48,4 @@ database_manager::image_entry database_manager::get_image_entry(int id)
 {
     return database_manager::image_entry();
 }
+
