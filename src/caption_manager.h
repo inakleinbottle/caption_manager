@@ -7,6 +7,7 @@
 
 #include <QMainWindow>
 #include <QDataWidgetMapper>
+#include <QGraphicsScene>
 
 #include "ImageDelegate.h"
 #include "database_manager.h"
@@ -28,7 +29,6 @@ private slots:
 
 private:
 
-    void setupModel();
 
 public:
     explicit caption_manager(QString dbpath, QWidget* parent = nullptr);
@@ -39,7 +39,7 @@ private:
     database_manager dbm;
     QSqlTableModel *model;
     QDataWidgetMapper* mapper;
-
+    QGraphicsScene* scene;
 };
 
 #endif//CAPTION_MANAGER_CAPTION_MANAGER_H

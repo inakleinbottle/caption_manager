@@ -8,11 +8,10 @@
 
 #include <QStyledItemDelegate>
 #include <QSize>
-#include <QPixmap>
-#include <QPainter>
 #include <QImage>
 #include <QVariant>
-#include <QPainter>
+#include <QGraphicsScene>
+#include <QGraphicsPixmapItem>
 
 class ImageDelegate : public QStyledItemDelegate
 {
@@ -20,16 +19,11 @@ public:
 
     ImageDelegate(int image_column, QObject* parent = nullptr);
 
-private:
-
-    QImage loadImage(const QString& path) const;
-
 public:
     void setEditorData(QWidget* editor, const QModelIndex& index) const override;
 
 private:
     int imageColumn;
-    QPainter* painter;
 };
 
 #endif//CAPTION_MANAGER_IMAGEDELEGATE_H

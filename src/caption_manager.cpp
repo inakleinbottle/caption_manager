@@ -11,7 +11,15 @@
 caption_manager::caption_manager(QString dbpath, QWidget* parent) : QMainWindow(parent), ui(new Ui::caption_manager), dbm(dbpath)
 {
     ui->setupUi(this);
-    setupModel();
+
+    scene = new QGraphicsScene(this);
+    ui->imagePreview->setScene(scene);
+
+    model = new QSqlTableModel(this);
+    model->setTable("images");
+    model->setEditStrategy(QSqlTableModel::OnManualSubmit);
+    model->select();
+
 
     ui->imageList->setModel(model);
     ui->imageList->setModelColumn(model->fieldIndex("name"));
@@ -21,7 +29,7 @@ caption_manager::caption_manager(QString dbpath, QWidget* parent) : QMainWindow(
     mapper->setItemDelegate(new ImageDelegate(model->fieldIndex("image_uri"), this));
 
     mapper->addMapping(ui->imageDescription, model->fieldIndex("caption"));
-    mapper->addMapping(ui->imageTitle, model->fieldIndex("image_uri"));
+    mapper->addMapping(ui->imageTitle, model->fieldIndex("name"));
     mapper->addMapping(ui->imagePreview, model->fieldIndex("image_uri"));
 
     mapper->toFirst();
@@ -38,13 +46,6 @@ caption_manager::~caption_manager()
     delete ui;
 }
 
-void caption_manager::setupModel()
-{
-    model = new QSqlTableModel(this);
-    model->setTable("images");
-    model->setEditStrategy(QSqlTableModel::OnManualSubmit);
-    model->select();
-}
 
 void caption_manager::onChangeItem()
 {
