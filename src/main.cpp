@@ -7,6 +7,8 @@
 
 #include "caption_manager.h"
 #include "database_manager.h"
+#include "CaptionManager.h"
+
 
 #define CAPMAN_VERSION "0.0"
 
@@ -22,7 +24,8 @@ int main(int argc, char* argv[])
     //database_manager dbm("test.sqlite");
 
 
-    caption_manager main_window("test.sqlite");
+    //caption_manager main_window("test.sqlite");
+    capman::CaptionManager main_window("test.sqlite");
     main_window.show();
     return app.exec();
 
