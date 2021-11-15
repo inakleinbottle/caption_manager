@@ -39,6 +39,9 @@ caption_manager::caption_manager(QString dbpath, QWidget* parent) : QMainWindow(
             mapper,
             &QDataWidgetMapper::setCurrentModelIndex);
 
+
+    connect(ui->actionSave, &QAction::triggered, this, &caption_manager::saveItem);
+
 }
 
 caption_manager::~caption_manager()
@@ -49,4 +52,11 @@ caption_manager::~caption_manager()
 
 void caption_manager::onChangeItem()
 {
+}
+
+void caption_manager::saveItem() const
+{
+    qDebug() << "Save action";
+    model->submitAll();
+
 }

@@ -44,6 +44,7 @@ private slots:
     void saveEntry();
     void deleteEntry();
     void about();
+    void exit();
 
 protected:
     void resizeEvent(QResizeEvent* event) override;

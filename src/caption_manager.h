@@ -25,6 +25,7 @@ class caption_manager : public QMainWindow
 
 private slots:
 
+    void saveItem() const;
     void onChangeItem();
 
 private:

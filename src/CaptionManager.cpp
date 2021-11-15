@@ -13,6 +13,13 @@ void capman::CaptionManager::newEntry()
 void capman::CaptionManager::saveEntry()
 {
     qDebug() << "Save entry";
+    mapper->submit();  // Force submit of the current widgets
+    if (model->isDirty()) {
+        qDebug() << "Submitting changes";
+        if (!model->submitAll()) {
+            qDebug() << "Failed to submit changes";
+        }
+    }
 }
 
 void capman::CaptionManager::deleteEntry()
@@ -25,13 +32,19 @@ void capman::CaptionManager::about()
     qDebug() << "about";
 }
 
+void capman::CaptionManager::exit()
+{
+    QCoreApplication::quit();
+}
+
 capman::CaptionManager::CaptionManager(QString dbpath, QWidget* parent)
     : QMainWindow(parent)
 {
     setObjectName("mainWindow");
     database = QSqlDatabase::addDatabase("QSQLITE");
+    setupDatabase(dbpath);
 
-    model = new QSqlTableModel(this);
+    model = new QSqlTableModel(this, database);
     mapper = new QDataWidgetMapper(this);
     scene = new QGraphicsScene(this);
 
@@ -85,7 +98,7 @@ capman::CaptionManager::CaptionManager(QString dbpath, QWidget* parent)
     actionExport->setObjectName("actionExport");
     actionExit->setObjectName("actionExit");
 
-    setupDatabase(dbpath);
+
     createActions();
     setupMainWindow();
     createMenuBar();
@@ -101,11 +114,6 @@ capman::CaptionManager::~CaptionManager()
         database.close();
     }
 
-    delete listLayout;
-    delete listButtonsLayout;
-    delete detailsLayout;
-    delete metadataLayout;
-    delete detailButtonsLayout;
 }
 
 void capman::CaptionManager::setupMainWindow()
@@ -153,7 +161,8 @@ void capman::CaptionManager::createActions()
     }
 
     {
-
+        actionExit->setText("Exit");
+        connect(actionExit, &QAction::triggered, this, &CaptionManager::exit);
     }
 
     {
@@ -182,7 +191,7 @@ void capman::CaptionManager::createUI()
     imageDateEdit->setCalendarPopup(true);
 
     imageTitleEdit->setPlaceholderText("Image title");
-    imageCaptionEdit->setPlaceholderText("Add text here...");
+
 
     {
         QSizePolicy sizePolicy(QSizePolicy::Maximum, QSizePolicy::Expanding);
@@ -190,8 +199,12 @@ void capman::CaptionManager::createUI()
         sizePolicy.setVerticalStretch(0);
         sizePolicy.setHeightForWidth(imageListView->sizePolicy().hasHeightForWidth());
         imageListView->setSizePolicy(sizePolicy);
+        imageListView->setMinimumWidth(150);
     }
 
+    {
+        imageCaptionEdit->setPlaceholderText("Add text here...");
+    }
 
     listLayout->addWidget(imageListView);
     listLayout->addLayout(listButtonsLayout);
@@ -238,6 +251,7 @@ void capman::CaptionManager::connectDatabase()
     imageListView->setModelColumn(model->fieldIndex("name"));
 
     mapper->setModel(model);
+    mapper->setSubmitPolicy(QDataWidgetMapper::AutoSubmit);
     mapper->setItemDelegate(new ImageDelegate(model->fieldIndex("image_uri"), this));
     mapper->addMapping(imageCaptionEdit, model->fieldIndex("caption"));
     mapper->addMapping(imageTitleEdit, model->fieldIndex("name"));
