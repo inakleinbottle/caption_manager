@@ -247,7 +247,7 @@ void capman::CaptionManager::createUI()
     imageDateEdit->setCalendarPopup(true);
 
     imageTitleEdit->setPlaceholderText("Image title");
-    connect(imageView, &QWidget)
+
 
     {
         auto icon = QIcon::fromTheme("list-add");
