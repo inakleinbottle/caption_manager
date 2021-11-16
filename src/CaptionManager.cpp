@@ -4,16 +4,49 @@
 
 #include "CaptionManager.h"
 #include <QIcon>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QStandardPaths>
 
 void capman::CaptionManager::newEntry()
 {
     qDebug() << "New entry";
+
+    QString selectedPath;
+    {
+        QString path = QStandardPaths::writableLocation(QStandardPaths::StandardLocation::PicturesLocation);
+        selectedPath = QFileDialog::getOpenFileName(this, "Select an Image", path, "Images (*.png *.jpg)");
+        if (selectedPath.isEmpty()) {
+            qDebug() << "No file selected";
+            return;
+        }
+    }
+
+    QFileInfo info(selectedPath);
+    QDateTime creationDate = info.birthTime();
+    QString fileName = info.baseName();
+
+    QSqlRecord newRecord = model->record();
+    newRecord.setValue("image_uri", QVariant(info.absoluteFilePath()));
+    newRecord.setValue("name", QVariant(fileName));
+    newRecord.setValue("created", QVariant(creationDate));
+    newRecord.setNull("caption");
+
+    if (!model->insertRecord(-1, newRecord)) {
+        qDebug() << "Failed to insert new record";
+    } else {
+        qDebug() << "Inserted new record" << fileName << ' ' << creationDate;
+    }
+
+    mapper->toLast();
 }
 
 void capman::CaptionManager::saveEntry()
 {
     qDebug() << "Save entry";
-    mapper->submit();  // Force submit of the current widgets
+    if (!mapper->submit()) {  // Force submit of the current widgets
+        qDebug() << "No changes submitted";
+    }
     if (model->isDirty()) {
         qDebug() << "Submitting changes";
         if (!model->submitAll()) {
@@ -35,6 +68,21 @@ void capman::CaptionManager::about()
 void capman::CaptionManager::exit()
 {
     QCoreApplication::quit();
+}
+
+void capman::CaptionManager::filterEntries()
+{
+    qDebug() << "Filtering entries";
+}
+
+void capman::CaptionManager::addTags()
+{
+    qDebug() << "Add tags";
+}
+
+void capman::CaptionManager::updateImage()
+{
+
 }
 
 capman::CaptionManager::CaptionManager(QString dbpath, QWidget* parent)
@@ -69,12 +117,18 @@ capman::CaptionManager::CaptionManager(QString dbpath, QWidget* parent)
     imageTitleEdit = new QLineEdit(centralWidget);
     imageDateEdit = new QDateTimeEdit(centralWidget);
     imageCaptionEdit = new QTextEdit(centralWidget);
+    buttonAddImage = new QPushButton(centralWidget);
+    buttonFilterImageList = new QPushButton(centralWidget);
+    buttonSaveImage = new QPushButton(centralWidget);
 
     imageListView->setObjectName("imageListView");
     imageView->setObjectName("imageView");
     imageTitleEdit->setObjectName("ImageTitleEdit");
     imageDateEdit->setObjectName("imageDateEdit");
     imageCaptionEdit->setObjectName("imageCaptionEdit");
+    buttonAddImage->setObjectName("buttonAddImage");
+    buttonFilterImageList->setObjectName("buttonFilterImageList");
+    buttonSaveImage->setObjectName("buttonSaveImage");
 
     menuBar = new QMenuBar(this);
     menuFile = menuBar->addMenu("&File");
@@ -162,11 +216,13 @@ void capman::CaptionManager::createActions()
 
     {
         actionExit->setText("Exit");
+        actionExit->setIcon(QIcon::fromTheme("application-exit"));
         connect(actionExit, &QAction::triggered, this, &CaptionManager::exit);
     }
 
     {
         actionAbout->setText("About");
+        actionAbout->setIcon(QIcon::fromTheme("help-about"));
         connect(actionAbout, &QAction::triggered, this, &CaptionManager::about);
     }
 
@@ -191,7 +247,25 @@ void capman::CaptionManager::createUI()
     imageDateEdit->setCalendarPopup(true);
 
     imageTitleEdit->setPlaceholderText("Image title");
+    connect(imageView, &QWidget)
 
+    {
+        auto icon = QIcon::fromTheme("list-add");
+        buttonAddImage->setIcon(icon);
+        connect(buttonAddImage, &QPushButton::clicked, this, &CaptionManager::newEntry);
+    }
+
+    {
+        auto icon = QIcon::fromTheme("document-save");
+        buttonSaveImage->setIcon(icon);
+        connect(buttonSaveImage, &QPushButton::clicked, this, &CaptionManager::saveEntry);
+    }
+
+    {
+        auto icon = QIcon::fromTheme("edit-find");
+        buttonFilterImageList->setIcon(icon);
+        connect(buttonFilterImageList, &QPushButton::clicked, this, &CaptionManager::filterEntries);
+    }
 
     {
         QSizePolicy sizePolicy(QSizePolicy::Maximum, QSizePolicy::Expanding);
@@ -208,6 +282,8 @@ void capman::CaptionManager::createUI()
 
     listLayout->addWidget(imageListView);
     listLayout->addLayout(listButtonsLayout);
+    listButtonsLayout->addWidget(buttonFilterImageList);
+    listButtonsLayout->addWidget(buttonAddImage);
 
     metadataLayout->addWidget(imageTitleEdit);
     metadataLayout->addWidget(imageDateEdit);
@@ -215,6 +291,7 @@ void capman::CaptionManager::createUI()
     detailsLayout->addWidget(imageView);
     detailsLayout->addWidget(imageCaptionEdit);
     detailsLayout->addLayout(detailButtonsLayout);
+    detailButtonsLayout->addWidget(buttonSaveImage);
 
     mainLayout->addLayout(listLayout);
     mainLayout->addLayout(detailsLayout);
@@ -235,7 +312,10 @@ void capman::CaptionManager::setupDatabase(const QString& dbpath)
         qDebug() << "Database not initialised, creating new tables";
 
         QSqlQuery query;
-        query.exec("CREATE TABLE images (id integer primary key, name text, image_uri path, caption text)");
+        query.exec("CREATE TABLE images"
+                   "(id integer primary key, name text,"
+                   " image_uri path, caption text,"
+                   " created timestamp)");
     }
 }
 
@@ -256,6 +336,7 @@ void capman::CaptionManager::connectDatabase()
     mapper->addMapping(imageCaptionEdit, model->fieldIndex("caption"));
     mapper->addMapping(imageTitleEdit, model->fieldIndex("name"));
     mapper->addMapping(imageView, model->fieldIndex("image_uri"));
+    mapper->addMapping(imageDateEdit, model->fieldIndex("created"));
 
     mapper->toFirst();
 

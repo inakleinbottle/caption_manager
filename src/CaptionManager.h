@@ -43,6 +43,10 @@ private slots:
     void newEntry();
     void saveEntry();
     void deleteEntry();
+    void filterEntries();
+    void addTags();
+    void updateImage();
+
     void about();
     void exit();
 
@@ -87,6 +91,12 @@ private:
     QDateTimeEdit* imageDateEdit;
     QLineEdit* imageTitleEdit;
     QTextEdit* imageCaptionEdit;
+    QPushButton* buttonAddImage;
+    QPushButton* buttonFilterImageList;
+    QPushButton* buttonSaveImage;
+
+
+
     QMenuBar* menuBar;
     QMenu* menuFile;
     QMenu* menuHelp;
