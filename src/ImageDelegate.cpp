@@ -22,16 +22,17 @@ void ImageDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
         auto image_view = dynamic_cast<QGraphicsView*>(editor);
         auto* scene = image_view->scene();
 
+        scene->clear();
         auto path = index.data().toString();
+        if (path.isEmpty()) {
+            return;
+        }
 
         QPixmap map(path);
 
-        if (!map.isNull()) {
-            scene->clear();
-            auto* item = new QGraphicsPixmapItem(map.scaled(image_view->width(), image_view->height(), Qt::KeepAspectRatio));
 
-            qDebug() << "Width: " << item->pixmap().width();
-            qDebug() << "Height: " << item->pixmap().height();
+        if (!map.isNull()) {
+            auto* item = new QGraphicsPixmapItem(map.scaled(image_view->width(), image_view->height(), Qt::KeepAspectRatio));
 
             scene->addItem(item);
             image_view->show();
@@ -40,5 +41,13 @@ void ImageDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
         QStyledItemDelegate::setEditorData(editor, index);
     }
 
+
+}
+void ImageDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
+{
+    // Don't change the image.
+    if (index.column() != imageColumn) {
+        QStyledItemDelegate::setModelData(editor, model, index);
+    }
 
 }
