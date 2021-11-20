@@ -117,6 +117,7 @@ capman::CaptionManager::CaptionManager(QString dbpath, QWidget* parent)
     imageTitleEdit = new QLineEdit(centralWidget);
     imageDateEdit = new QDateTimeEdit(centralWidget);
     imageCaptionEdit = new QTextEdit(centralWidget);
+    imageTagList = new QComboBox(centralWidget);
     buttonAddImage = new QPushButton(centralWidget);
     buttonFilterImageList = new QPushButton(centralWidget);
     buttonSaveImage = new QPushButton(centralWidget);
@@ -126,6 +127,7 @@ capman::CaptionManager::CaptionManager(QString dbpath, QWidget* parent)
     imageTitleEdit->setObjectName("ImageTitleEdit");
     imageDateEdit->setObjectName("imageDateEdit");
     imageCaptionEdit->setObjectName("imageCaptionEdit");
+    imageTagList->setObjectName("imageTagList");
     buttonAddImage->setObjectName("buttonAddImage");
     buttonFilterImageList->setObjectName("buttonFilterImageList");
     buttonSaveImage->setObjectName("buttonSaveImage");
@@ -280,6 +282,11 @@ void capman::CaptionManager::createUI()
         imageCaptionEdit->setPlaceholderText("Add text here...");
     }
 
+    {
+        imageTagList->setPlaceholderText("Add a tag to this image...");
+        imageTagList->setEditable(true);
+    }
+
     listLayout->addWidget(imageListView);
     listLayout->addLayout(listButtonsLayout);
     listButtonsLayout->addWidget(buttonFilterImageList);
@@ -291,6 +298,7 @@ void capman::CaptionManager::createUI()
     detailsLayout->addWidget(imageView);
     detailsLayout->addWidget(imageCaptionEdit);
     detailsLayout->addLayout(detailButtonsLayout);
+    detailButtonsLayout->addWidget(imageTagList);
     detailButtonsLayout->addWidget(buttonSaveImage);
 
     mainLayout->addLayout(listLayout);
@@ -312,10 +320,57 @@ void capman::CaptionManager::setupDatabase(const QString& dbpath)
         qDebug() << "Database not initialised, creating new tables";
 
         QSqlQuery query;
-        query.exec("CREATE TABLE images"
-                   "(id integer primary key, name text,"
-                   " image_uri path, caption text,"
-                   " created timestamp)");
+        query.exec(
+            "CREATE TABLE tags"
+                "("
+                "   id integer"
+                "       constraints tags_pk"
+                "           primary key autoincrement,"
+                "   name text not null"
+                ");"
+        );
+        query.exec(
+            "CRATE UNIQUE INDEX tags_id_uindex"
+                     "  on tags (id);"
+        );
+        query.exec(
+            "CRATE UNIQUE INDEX tags_name_uindex"
+                     "  on tags (name);"
+        );
+
+
+        query.exec(
+                "CREATE TABLE images"
+                "("
+                "   id integer primary key, "
+                "   name text,"
+                "   image_uri path, "
+                "   caption text,"
+                "   created timestamp"
+                ");"
+        );
+
+        query.exec(
+                "CREATE TABLE image_tags"
+                "("
+                "   id integer"
+                "      constraint image_tags_pk"
+                "          primary key autoincrement,"
+                "   imageID integer not null"
+                "      constraint image_tags_images_id_fk"
+                "          references images"
+                "              on delete cascade,"
+                "      tagID integer not null"
+                "           constraint image_tags_tags_id_fk"
+                "               references tags"
+                "                   on delete cascade"
+                ");"
+                );
+        query.exec(
+                "CREATE UNIQUE INDEX image_tags_id_uindex"
+                "   on image_tags (id);"
+                );
+
     }
 }
 

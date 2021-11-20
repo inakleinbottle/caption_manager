@@ -70,7 +70,6 @@ private:
 
 private:
 
-
     QSqlDatabase database;
     QSqlTableModel* model;
     QDataWidgetMapper* mapper;
@@ -91,6 +90,7 @@ private:
     QDateTimeEdit* imageDateEdit;
     QLineEdit* imageTitleEdit;
     QTextEdit* imageCaptionEdit;
+    QComboBox* imageTagList;
     QPushButton* buttonAddImage;
     QPushButton* buttonFilterImageList;
     QPushButton* buttonSaveImage;
