@@ -5,7 +5,7 @@
 #include <QApplication>
 #include <QDebug>
 
-#include "caption_manager.h"
+
 #include "database_manager.h"
 #include "CaptionManager.h"
 
