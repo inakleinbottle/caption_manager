@@ -117,20 +117,21 @@ capman::CaptionManager::CaptionManager(QString dbpath, QWidget* parent)
     imageTitleEdit = new QLineEdit(centralWidget);
     imageDateEdit = new QDateTimeEdit(centralWidget);
     imageCaptionEdit = new QTextEdit(centralWidget);
-    imageTagList = new QComboBox(centralWidget);
+
     buttonAddImage = new QPushButton(centralWidget);
     buttonFilterImageList = new QPushButton(centralWidget);
     buttonSaveImage = new QPushButton(centralWidget);
+    buttonEditImageTags = new QPushButton(centralWidget);
 
     imageListView->setObjectName("imageListView");
     imageView->setObjectName("imageView");
     imageTitleEdit->setObjectName("ImageTitleEdit");
     imageDateEdit->setObjectName("imageDateEdit");
     imageCaptionEdit->setObjectName("imageCaptionEdit");
-    imageTagList->setObjectName("imageTagList");
     buttonAddImage->setObjectName("buttonAddImage");
     buttonFilterImageList->setObjectName("buttonFilterImageList");
     buttonSaveImage->setObjectName("buttonSaveImage");
+    buttonEditImageTags->setObjectName("buttonEditImageTags");
 
     menuBar = new QMenuBar(this);
     menuFile = menuBar->addMenu("&File");
@@ -282,10 +283,6 @@ void capman::CaptionManager::createUI()
         imageCaptionEdit->setPlaceholderText("Add text here...");
     }
 
-    {
-        imageTagList->setPlaceholderText("Add a tag to this image...");
-        imageTagList->setEditable(true);
-    }
 
     listLayout->addWidget(imageListView);
     listLayout->addLayout(listButtonsLayout);
@@ -298,7 +295,6 @@ void capman::CaptionManager::createUI()
     detailsLayout->addWidget(imageView);
     detailsLayout->addWidget(imageCaptionEdit);
     detailsLayout->addLayout(detailButtonsLayout);
-    detailButtonsLayout->addWidget(imageTagList);
     detailButtonsLayout->addWidget(buttonSaveImage);
 
     mainLayout->addLayout(listLayout);
