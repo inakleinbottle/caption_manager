@@ -28,7 +28,7 @@
 #include <QtWidgets/QWidget>
 
 
-
+#include "TagEditorDialog.h"
 #include "ImageDelegate.h"
 
 
@@ -44,7 +44,7 @@ private slots:
     void saveEntry();
     void deleteEntry();
     void filterEntries();
-    void addTags();
+    void editTags();
     void updateImage();
 
     void about();
@@ -109,6 +109,7 @@ private:
     QAction* actionExport;
     QAction* actionExit;
 
+    TagEditorDialog* tagEditorDialog;
 };
 
 }

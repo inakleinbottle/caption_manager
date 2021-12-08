@@ -7,6 +7,8 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QStandardPaths>
+#include <QMessageBox>
+
 
 void capman::CaptionManager::newEntry()
 {
@@ -57,12 +59,21 @@ void capman::CaptionManager::saveEntry()
 
 void capman::CaptionManager::deleteEntry()
 {
-    qDebug() << "Delete entry";
+    auto confirmed = QMessageBox::question(this, "Confirm delete",
+                          "You are about to delete the entry for this image.\n"
+                          "This will not delete the image itself.\n"
+                          "Are you sure you wish to proceed?"
+                          );
+
+    if (confirmed == QMessageBox::StandardButton::Ok) {
+        model->removeRow(mapper->currentIndex());
+        model->submitAll();
+    }
 }
 
 void capman::CaptionManager::about()
 {
-    qDebug() << "about";
+    QMessageBox::about(this, "About", "Image caption manager thing.");
 }
 
 void capman::CaptionManager::exit()
@@ -75,9 +86,16 @@ void capman::CaptionManager::filterEntries()
     qDebug() << "Filtering entries";
 }
 
-void capman::CaptionManager::addTags()
+void capman::CaptionManager::editTags()
 {
     qDebug() << "Add tags";
+    auto current_id = model->record(mapper->currentIndex()).field("id").value().toInt();
+
+    TagEditorDialog dialog(database, current_id, this);
+    dialog.setModal(true);
+    dialog.exec();
+
+
 }
 
 void capman::CaptionManager::updateImage()
@@ -271,6 +289,11 @@ void capman::CaptionManager::createUI()
     }
 
     {
+        buttonEditImageTags->setText("Edit tags");
+        connect(buttonEditImageTags, &QPushButton::clicked, this, &CaptionManager::editTags);
+    }
+
+    {
         QSizePolicy sizePolicy(QSizePolicy::Maximum, QSizePolicy::Expanding);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
@@ -295,6 +318,7 @@ void capman::CaptionManager::createUI()
     detailsLayout->addWidget(imageView);
     detailsLayout->addWidget(imageCaptionEdit);
     detailsLayout->addLayout(detailButtonsLayout);
+    detailButtonsLayout->addWidget(buttonEditImageTags);
     detailButtonsLayout->addWidget(buttonSaveImage);
 
     mainLayout->addLayout(listLayout);
@@ -315,57 +339,77 @@ void capman::CaptionManager::setupDatabase(const QString& dbpath)
     if (!database.tables().contains("images")) {
         qDebug() << "Database not initialised, creating new tables";
 
-        QSqlQuery query;
-        query.exec(
-            "CREATE TABLE tags"
-                "("
-                "   id integer"
-                "       constraints tags_pk"
-                "           primary key autoincrement,"
-                "   name text not null"
-                ");"
-        );
-        query.exec(
-            "CRATE UNIQUE INDEX tags_id_uindex"
-                     "  on tags (id);"
-        );
-        query.exec(
-            "CRATE UNIQUE INDEX tags_name_uindex"
-                     "  on tags (name);"
-        );
+        QSqlQuery query(database);
+
+        auto exec_query = [&query](auto t) {
+            if (!query.exec(t)) {
+                qDebug() << query.lastError();
+                throw std::runtime_error("Failed to create database");
+            }
+        };
+
+        exec_query(R"sql(
+create table tags
+(
+    id integer not null
+        constraint tags_pk
+            primary key autoincrement,
+    name text not null
+)
+)sql");
+
+        exec_query(R"sql(
+create unique index tags_id_uindex
+    on tags (id)
+)sql");
+
+        exec_query(R"sql(
+create unique index tags_name_uindex
+    on tags (name)
+)sql");
+
+        exec_query(R"sql(
+create table images
+(
+    id        integer not null
+        constraint images_pk
+            primary key autoincrement,
+    name      text    not null,
+    image_uri text,
+    caption   text,
+    created   timestamp
+)
+)sql");
+
+        exec_query(R"sql(
+create unique index images_id_uindex
+    on images (id)
+)sql");
+
+        exec_query(R"sql(
+create table image_tags
+(
+    id      integer not null
+        constraint image_tags_pk
+            primary key autoincrement,
+    tagID   integer not null
+        constraint image_tags_tags_id_fk
+            references tags
+            on update cascade on delete cascade
+            deferrable initially deferred,
+    imageID integer not null
+        constraint image_tags_images_id_fk
+            references images
+)
+)sql");
+
+        exec_query(R"sql(
+create unique index image_tags_id_uindex
+    on image_tags (id)
+)sql");
 
 
-        query.exec(
-                "CREATE TABLE images"
-                "("
-                "   id integer primary key, "
-                "   name text,"
-                "   image_uri path, "
-                "   caption text,"
-                "   created timestamp"
-                ");"
-        );
 
-        query.exec(
-                "CREATE TABLE image_tags"
-                "("
-                "   id integer"
-                "      constraint image_tags_pk"
-                "          primary key autoincrement,"
-                "   imageID integer not null"
-                "      constraint image_tags_images_id_fk"
-                "          references images"
-                "              on delete cascade,"
-                "      tagID integer not null"
-                "           constraint image_tags_tags_id_fk"
-                "               references tags"
-                "                   on delete cascade"
-                ");"
-                );
-        query.exec(
-                "CREATE UNIQUE INDEX image_tags_id_uindex"
-                "   on image_tags (id);"
-                );
 
     }
 }
