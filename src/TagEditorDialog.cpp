@@ -6,6 +6,7 @@
 #include <QSqlRelation>
 #include <QCompleter>
 #include <QMessageBox>
+#include <QSqlRelationalDelegate>
 
 void capman::TagEditorDialog::connectDatabase()
 {
@@ -19,7 +20,7 @@ void capman::TagEditorDialog::connectDatabase()
 
     tagList->setModel(model);
     tagList->setModelColumn(model->fieldIndex("name"));
-
+    tagList->setItemDelegate(new QSqlRelationalDelegate(tagList));
 
 }
 
@@ -47,6 +48,7 @@ void capman::TagEditorDialog::setupUI()
                 );
     }
 
+
     {
         auto icon = QIcon::fromTheme("edit-undo");
         buttonRevertTag->setIcon(icon);
@@ -59,11 +61,21 @@ void capman::TagEditorDialog::setupUI()
     }
 
     {
-        //auto imageRelModel = model->relationModel(model->fieldIndex("name"));
-        //auto nameCol = imageRelModel->fieldIndex("name");
-        //tagLineEdit->setCompleter(new QCompleter(imageRelModel, this));
-        //tagLineEdit->completer()->setCompletionColumn(nameCol);
+        buttonOK->setText("Ok");
+        connect(buttonOK, &QPushButton::clicked, this, &TagEditorDialog::accept);
+    }
 
+    {
+        buttonCancel->setText("Cancel");
+        connect(buttonCancel, &QPushButton::clicked, this, &TagEditorDialog::reject);
+    }
+
+
+    {
+        auto imageRelModel = model->relationModel(model->fieldIndex("name"));
+        auto nameCol = imageRelModel->fieldIndex("name");
+        tagLineEdit->setCompleter(new QCompleter(imageRelModel, this));
+        tagLineEdit->completer()->setCompletionColumn(nameCol);
     }
 
     listLayout->addWidget(tagLineEdit);
@@ -73,8 +85,14 @@ void capman::TagEditorDialog::setupUI()
     buttonLayout->addWidget(buttonRemoveTag);
     buttonLayout->addWidget(buttonRevertTag);
 
-    mainLayout->addLayout(listLayout);
-    mainLayout->addLayout(buttonLayout);
+    bottomLayout->addWidget(buttonCancel);
+    bottomLayout->addWidget(buttonOK);
+
+    midLayout->addLayout(listLayout);
+    midLayout->addLayout(buttonLayout);
+
+    mainLayout->addLayout(midLayout);
+    mainLayout->addLayout(bottomLayout);
 }
 
 capman::TagEditorDialog::TagEditorDialog(QSqlDatabase& db, int index, QWidget* parent)
@@ -82,28 +100,35 @@ capman::TagEditorDialog::TagEditorDialog(QSqlDatabase& db, int index, QWidget* p
 {
     db_.transaction();
 
-    mainLayout = new QHBoxLayout(this);
+    mainLayout = new QVBoxLayout(this);
+    midLayout = new QHBoxLayout;
     listLayout = new QVBoxLayout;
     buttonLayout = new QVBoxLayout;
+    bottomLayout = new QHBoxLayout;
 
     mainLayout->setObjectName("mainLayout");
+    midLayout->setObjectName("midLayout");
     listLayout->setObjectName("listLayout");
     buttonLayout->setObjectName("buttonLayout");
+    bottomLayout->setObjectName("bottomLayout");
 
     tagList = new QListView(this);
     tagLineEdit = new QLineEdit(this);
     buttonAddTag = new QPushButton(this);
     buttonRevertTag = new QPushButton(this);
     buttonRemoveTag = new QPushButton(this);
+    buttonOK = new QPushButton(this);
+    buttonCancel = new QPushButton(this);
 
     tagList->setObjectName("tagList");
     tagLineEdit->setObjectName("tagLineEdit");
     buttonAddTag->setObjectName("buttonAddTag");
     buttonRevertTag->setObjectName("buttonRevertTag");
     buttonRemoveTag->setObjectName("buttonRemoveTag");
+    buttonOK->setObjectName("buttonOK");
+    buttonCancel->setObjectName("buttonCancel");
 
     model = new QSqlRelationalTableModel(this, db);
-    mapper = new QDataWidgetMapper(this);
 
     connectDatabase();
     setupUI();
@@ -111,7 +136,8 @@ capman::TagEditorDialog::TagEditorDialog(QSqlDatabase& db, int index, QWidget* p
 
 void capman::TagEditorDialog::revertTags()
 {
-    model->revertAll();
+    db_.rollback();
+    model->select();
 }
 
 void capman::TagEditorDialog::addTag()
@@ -122,6 +148,7 @@ void capman::TagEditorDialog::addTag()
         QMessageBox::warning(this, "Error", "Tag cannot be empty");
         return;
     }
+    tagLineEdit->clear();
 
     QSqlQuery query(db_);
     query.prepare("SELECT id FROM tags WHERE name = (?)");
@@ -174,9 +201,6 @@ INSERT INTO tags (name) VALUES (?);
 
     }
 
-    qDebug() << tagID;
-    query.clear();
-
     query.prepare("INSERT INTO image_tags (tagID, imageID) VALUES (?, ?);");
     query.addBindValue(QVariant(tagID));
     query.addBindValue(QVariant(current_image));
@@ -186,16 +210,36 @@ INSERT INTO tags (name) VALUES (?);
         db_.rollback();
     }
 
+    model->select();
 }
 
 void capman::TagEditorDialog::removeTag()
 {
+    auto index = tagList->currentIndex();
+    QSqlQuery query(db_);
+    query.prepare("DELETE FROM image_tags WHERE id=?");
+    qDebug() << index << model->record(index.row()).value(0);
+    query.addBindValue(model->record(index.row()).value(0));
 
+    if (!query.exec()) {
+        qDebug() << "unable to delete row" << query.lastError();
+    }
+
+    model->select();
 }
 
-capman::TagEditorDialog::~TagEditorDialog()
+
+void capman::TagEditorDialog::accept()
 {
-    if (db_.transaction() && !db_.commit()) {
+    qDebug() << "Accepting changes";
+    if (!db_.commit()) {
         qDebug() << "Failed to commit" << db_.lastError();
     }
+    QDialog::accept();
+}
+void capman::TagEditorDialog::reject()
+{
+    qDebug() << "Rejecting changes";
+    db_.rollback();
+    QDialog::reject();
 }

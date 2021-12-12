@@ -30,6 +30,10 @@ private slots:
     void removeTag();
     void revertTags();
 
+public:
+    void accept() override;
+    void reject() override;
+
 private:
 
     void connectDatabase();
@@ -38,7 +42,7 @@ private:
 public:
     explicit TagEditorDialog(QSqlDatabase& db, int index, QWidget* parent = nullptr);
 
-    ~TagEditorDialog() override;
+    ~TagEditorDialog() override = default;
 
 private:
     QListView* tagList;
@@ -46,14 +50,16 @@ private:
     QPushButton* buttonAddTag;
     QPushButton* buttonRemoveTag;
     QPushButton* buttonRevertTag;
+    QPushButton* buttonOK;
+    QPushButton* buttonCancel;
 
-
-    QHBoxLayout* mainLayout;
+    QVBoxLayout* mainLayout;
+    QHBoxLayout* midLayout;
     QVBoxLayout* listLayout;
     QVBoxLayout* buttonLayout;
+    QHBoxLayout* bottomLayout;
 
     QSqlRelationalTableModel* model;
-    QDataWidgetMapper* mapper;
     int current_image;
     QSqlDatabase db_;
 };
