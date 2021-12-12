@@ -23,7 +23,7 @@ add_executable(caption_manager
         src/ImageDelegate.h
         src/CaptionManager.cpp
         src/CaptionManager.h
-        src/TagEditorDialog.cpp src/TagEditorDialog.h)
+        src/TagEditorDialog.cpp src/TagEditorDialog.h src/FilterDialog.cpp src/FilterDialog.h)
 
 
 target_link_libraries(caption_manager PRIVATE Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Sql)
