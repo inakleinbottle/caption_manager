@@ -5,8 +5,6 @@
 #include <QApplication>
 #include <QDebug>
 
-
-#include "database_manager.h"
 #include "CaptionManager.h"
 
 
@@ -15,18 +13,12 @@
 int main(int argc, char* argv[])
 {
     //Q_INIT_RESOURCE(application);
-
     QApplication app(argc, argv);
 
     QCoreApplication::setApplicationName("Caption Manager");
     QCoreApplication::setApplicationVersion(CAPMAN_VERSION);
 
-    //database_manager dbm("test.sqlite");
-
-
-    //caption_manager main_window("test.sqlite");
     capman::CaptionManager main_window("test.sqlite");
     main_window.show();
     return app.exec();
-
 }

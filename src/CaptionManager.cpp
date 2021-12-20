@@ -9,6 +9,8 @@
 #include <QStandardPaths>
 #include <QMessageBox>
 
+#include "FilterDialog.h"
+
 
 void capman::CaptionManager::newEntry()
 {
@@ -83,6 +85,10 @@ void capman::CaptionManager::exit()
 
 void capman::CaptionManager::filterEntries()
 {
+    capman::FilterDialog dialog(database, this);
+    dialog.setModal(true);
+    dialog.exec();
+
     qDebug() << "Filtering entries";
 }
 
