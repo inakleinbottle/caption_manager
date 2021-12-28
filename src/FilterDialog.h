@@ -11,6 +11,7 @@
 
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QListView>
+#include <QtWidgets/QPushButton>
 
 namespace capman {
 
@@ -37,14 +38,17 @@ public:
     ~FilterDialog() override = default;
 
 private:
-    QHBoxLayout* mainLayout;
+    QVBoxLayout* mainLayout;
     QVBoxLayout* tagSelectLayout;
+    QHBoxLayout* buttonLayout;
 
     QListView* tagSelector;
+    QPushButton* acceptButton;
+    QPushButton* cancelButton;
 
     QSqlTableModel* model;
     QSqlDatabase db_;
-    QString selectStatement;
+    QStringList selectStatement;
 };
 
 

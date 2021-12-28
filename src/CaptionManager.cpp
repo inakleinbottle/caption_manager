@@ -8,8 +8,27 @@
 #include <QFileInfo>
 #include <QStandardPaths>
 #include <QMessageBox>
+#include <QCryptographicHash>
+#include <QPdfWriter>
 
 #include "FilterDialog.h"
+
+
+QByteArray readHash(const QString& fname)
+{
+    QCryptographicHash hasher(QCryptographicHash::Sha256);
+    QFile fd(fname);
+    if (!fd.open(QFile::ReadOnly)) {
+        qDebug() << "Error reading file to generate hash";
+        throw std::runtime_error("error reading file to generate hash");
+    }
+    if (!hasher.addData(&fd)) {
+        qDebug() << "Error hashing file content";
+        throw std::runtime_error("error hashing file contents");
+    }
+    return hasher.result();
+}
+
 
 
 void capman::CaptionManager::newEntry()
@@ -34,6 +53,7 @@ void capman::CaptionManager::newEntry()
     newRecord.setValue("image_uri", QVariant(info.absoluteFilePath()));
     newRecord.setValue("name", QVariant(fileName));
     newRecord.setValue("created", QVariant(creationDate));
+    newRecord.setValue("file_hash", QVariant(readHash(selectedPath)));
     newRecord.setNull("caption");
 
     if (!model->insertRecord(-1, newRecord)) {
@@ -85,11 +105,22 @@ void capman::CaptionManager::exit()
 
 void capman::CaptionManager::filterEntries()
 {
-    capman::FilterDialog dialog(database, this);
-    dialog.setModal(true);
-    dialog.exec();
+    if (model->filter().isEmpty()) {
+        qDebug() << "Filtering entries";
+        capman::FilterDialog dialog(database, this);
+        dialog.setModal(true);
+        dialog.exec();
 
-    qDebug() << "Filtering entries";
+        auto filter = dialog.getSelectStatement();
+        model->setFilter(filter);
+        buttonFilterImageList->setChecked(true);
+    }
+    else {
+        qDebug() << "Removing filter";
+        model->setFilter("");
+        buttonFilterImageList->setChecked(false);
+    }
+    model->select();
 }
 
 void capman::CaptionManager::editTags()
@@ -220,6 +251,7 @@ void capman::CaptionManager::createActions()
     actionAddImage->setObjectName("actionAddImage");
     actionSaveImage->setObjectName("actionSaveImage");
     actionDeleteImage->setObjectName("actionDeleteImage");
+    actionExport->setObjectName("actionExport");
 
     {
         actionAddImage->setShortcuts(QKeySequence::New);
@@ -253,6 +285,11 @@ void capman::CaptionManager::createActions()
         connect(actionAbout, &QAction::triggered, this, &CaptionManager::about);
     }
 
+    {
+        actionExport->setText("Export");
+        connect(actionExport, &QAction::triggered, this, &CaptionManager::exportDocument);
+    }
+
 }
 
 void capman::CaptionManager::createMenuBar()
@@ -261,6 +298,7 @@ void capman::CaptionManager::createMenuBar()
     menuFile->addAction(actionSaveImage);
     menuFile->addAction(actionDeleteImage);
     menuFile->addSeparator();
+    menuFile->addAction(actionExport);
 
     menuHelp->addAction(actionAbout);
 
@@ -292,6 +330,8 @@ void capman::CaptionManager::createUI()
         auto icon = QIcon::fromTheme("edit-find");
         buttonFilterImageList->setIcon(icon);
         connect(buttonFilterImageList, &QPushButton::clicked, this, &CaptionManager::filterEntries);
+        buttonFilterImageList->setCheckable(true);
+        buttonFilterImageList->setChecked(false);
     }
 
     {
@@ -383,8 +423,14 @@ create table images
     name      text    not null,
     image_uri text,
     caption   text,
-    created   timestamp
+    created   timestamp,
+    file_hash binary(256)
 )
+)sql");
+
+        exec_query(R"sql(
+create unique index images_file_hash_uindex
+    on images (file_hash);
 )sql");
 
         exec_query(R"sql(
@@ -454,4 +500,59 @@ void capman::CaptionManager::resizeEvent(QResizeEvent* event)
 {
     QWidget::resizeEvent(event);
     mapper->setCurrentModelIndex(imageListView->currentIndex());
+}
+
+void capman::CaptionManager::exportDocument()
+{
+
+    auto filename = QFileDialog::getSaveFileName(
+            this,
+            "Select name for new file",
+            QStandardPaths::writableLocation(QStandardPaths::StandardLocation::DocumentsLocation),
+            "PDF Files (*.pdf)"
+            );
+    if (filename.isEmpty()) {
+        qDebug() << "Export cancelled";
+        return;
+    }
+    qDebug() << "Generating PDF into" << filename;
+
+    auto current = imageListView->currentIndex().row();
+
+    QTextDocument document;
+    QPdfWriter writer(filename);
+    const auto pageLayout = writer.pageLayout();
+    QTextCursor cursor(&document);
+
+    {
+        auto record = model->record(current);
+        QImage img(record.value(2).toString());
+        const QString title = record.value(1).toString();
+        const QString caption = record.value(3).toString();
+        document.addResource(QTextDocument::ImageResource, QUrl(title), QVariant(img));
+
+        {
+            QTextBlockFormat titleFormat;
+            cursor.insertBlock(titleFormat);
+            cursor.insertHtml(QString("<h1><center>%1</center></h1>").arg(title));
+        }
+
+        {
+            cursor.insertBlock();
+            QTextImageFormat format;
+            format.setName(title);
+            format.setWidth(pageLayout.paintRect().width());
+            cursor.insertImage(format);
+        }
+
+        {
+            cursor.insertBlock();
+            cursor.insertHtml(caption);
+        }
+
+    }
+
+
+
+    document.print(&writer);
 }

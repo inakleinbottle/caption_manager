@@ -8,12 +8,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+include(vcpkg OPTIONAL)
+
 
 
 find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets Sql)
-
-
-
 
 add_executable(caption_manager
         src/main.cpp
@@ -21,7 +20,14 @@ add_executable(caption_manager
         src/ImageDelegate.h
         src/CaptionManager.cpp
         src/CaptionManager.h
-        src/TagEditorDialog.cpp src/TagEditorDialog.h src/FilterDialog.cpp src/FilterDialog.h)
+        src/TagEditorDialog.cpp
+        src/TagEditorDialog.h
+        src/FilterDialog.cpp
+        src/FilterDialog.h)
 
 
-target_link_libraries(caption_manager PRIVATE Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Sql)
+target_link_libraries(caption_manager PRIVATE
+        Qt5::Core
+        Qt5::Gui
+        Qt5::Widgets
+        Qt5::Sql)

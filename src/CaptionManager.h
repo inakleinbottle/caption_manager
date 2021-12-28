@@ -46,6 +46,7 @@ private slots:
     void filterEntries();
     void editTags();
     void updateImage();
+    void exportDocument();
 
     void about();
     void exit();
@@ -109,7 +110,6 @@ private:
     QAction* actionExport;
     QAction* actionExit;
 
-    TagEditorDialog* tagEditorDialog;
 };
 
 }
