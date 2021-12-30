@@ -48,8 +48,8 @@ int main(int argc, char* argv[])
     std::filesystem::path p(database_path.toStdString());
     if (!std::filesystem::exists(p)) {
         QDir root;
-        qDebug() << "Creating directory" << p.parent_path().c_str();
-        root.mkpath(p.parent_path().c_str());
+        qDebug() << "Creating directory" << p.parent_path().string().c_str();
+        root.mkpath(p.parent_path().string().c_str());
     }
 
 
