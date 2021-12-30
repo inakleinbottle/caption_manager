@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Package>
+    <DisplayName>Caption Manager main</DisplayName>
+    <Description>Install the caption manager main application.</Description>
+    <Version>1.0.0</Version>
+    <ReleaseDate>2021-12-30</ReleaseDate>
+    <Licenses>
+        <License name="MIT License" file="LICENSE" />
+    </Licenses>
+    <Default>true</Default>
+</Package>

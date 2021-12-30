@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Installer>
+    <Name>Caption Manager</Name>
+    <Version>1.0.0</Version>
+    <Title>Caption Manager Installer</Title>
+    <Publisher>Inakleinbottle</Publisher>
+    <StartMenuDir>CaptionManager</StartMenuDir>
+    <TargetDir>@ApplicationsDir@/</TargetDir>
+</Installer>
