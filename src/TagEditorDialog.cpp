@@ -27,7 +27,7 @@ void capman::TagEditorDialog::connectDatabase()
 void capman::TagEditorDialog::setupUI()
 {
     {
-        auto icon = QIcon::fromTheme("list-add");
+        auto icon = QIcon::fromTheme("list-add", QIcon(":/resources/list-add.svg"));
         buttonAddTag->setIcon(icon);
         connect(
                 buttonAddTag,
@@ -38,7 +38,7 @@ void capman::TagEditorDialog::setupUI()
     }
 
     {
-        auto icon = QIcon::fromTheme("list-remove");
+        auto icon = QIcon::fromTheme("list-remove", QIcon(":/resources/list-remove.svg"));
         buttonRemoveTag->setIcon(icon);
         connect(
                 buttonRemoveTag,
@@ -50,7 +50,7 @@ void capman::TagEditorDialog::setupUI()
 
 
     {
-        auto icon = QIcon::fromTheme("edit-undo");
+        auto icon = QIcon::fromTheme("edit-undo", QIcon(":/resources/edit-undo.svg"));
         buttonRevertTag->setIcon(icon);
         connect(
                 buttonRevertTag,

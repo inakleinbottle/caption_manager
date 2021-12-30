@@ -49,11 +49,28 @@ void capman::CaptionManager::newEntry()
     QDateTime creationDate = info.birthTime();
     QString fileName = info.baseName();
 
+    auto hash = readHash(selectedPath);
+    {
+        QSqlQuery query;
+        query.prepare("SELECT id FROM images WHERE file_hash=?");
+        query.addBindValue(QVariant(hash));
+
+        if (!query.exec()) {
+            qDebug() << "Failed to execute checking query" << query.lastError();
+            return;
+        }
+
+        if (query.next()) {
+            qDebug() << "Image already in database";
+            return;
+        }
+    }
+
     QSqlRecord newRecord = model->record();
     newRecord.setValue("image_uri", QVariant(info.absoluteFilePath()));
     newRecord.setValue("name", QVariant(fileName));
     newRecord.setValue("created", QVariant(creationDate));
-    newRecord.setValue("file_hash", QVariant(readHash(selectedPath)));
+    newRecord.setValue("file_hash", QVariant(hash));
     newRecord.setNull("caption");
 
     if (!model->insertRecord(-1, newRecord)) {
@@ -95,7 +112,11 @@ void capman::CaptionManager::deleteEntry()
 
 void capman::CaptionManager::about()
 {
-    QMessageBox::about(this, "About", "Image caption manager thing.");
+    QMessageBox::about(this, "About",
+                       "Image caption manager thing.\n\n"
+                       "This application uses the Qt Framework licensed under LGPLv3 "
+                       "and icons from the Breeze KDE theme also licensed under LGPLv3."
+                       );
 }
 
 void capman::CaptionManager::exit()
@@ -255,33 +276,33 @@ void capman::CaptionManager::createActions()
 
     {
         actionAddImage->setShortcuts(QKeySequence::New);
-        actionAddImage->setIcon(QIcon::fromTheme("document-new"));
+        actionAddImage->setIcon(QIcon::fromTheme("document-new", QIcon(":/resources/document-new.svg")));
         actionAddImage->setText("Add");
         connect(actionAddImage, &QAction::triggered, this, &CaptionManager::newEntry);
     }
 
     {
         actionSaveImage->setShortcuts(QKeySequence::Save);
-        actionSaveImage->setIcon(QIcon::fromTheme("document-save"));
+        actionSaveImage->setIcon(QIcon::fromTheme("document-save", QIcon(":/resources/document-save.svg")));
         actionSaveImage->setText("Save");
         connect(actionSaveImage, &QAction::triggered, this, &CaptionManager::saveEntry);
     }
 
     {
-        actionDeleteImage->setIcon(QIcon::fromTheme("document-delete"));
+        actionDeleteImage->setIcon(QIcon::fromTheme("edit-delete", QIcon(":/resources/edit-delete.svg")));
         actionDeleteImage->setText("Delete");
         connect(actionDeleteImage, &QAction::triggered, this, &CaptionManager::deleteEntry);
     }
 
     {
         actionExit->setText("Exit");
-        actionExit->setIcon(QIcon::fromTheme("application-exit"));
+        actionExit->setIcon(QIcon::fromTheme("application-exit", QIcon(":/resources/application-exit.svg")));
         connect(actionExit, &QAction::triggered, this, &CaptionManager::exit);
     }
 
     {
         actionAbout->setText("About");
-        actionAbout->setIcon(QIcon::fromTheme("help-about"));
+        actionAbout->setIcon(QIcon::fromTheme("help-about", QIcon(":/resources/help-about.svg")));
         connect(actionAbout, &QAction::triggered, this, &CaptionManager::about);
     }
 
@@ -315,19 +336,19 @@ void capman::CaptionManager::createUI()
 
 
     {
-        auto icon = QIcon::fromTheme("list-add");
+        auto icon = QIcon::fromTheme("list-add", QIcon(":/resources/list-add.svg"));
         buttonAddImage->setIcon(icon);
         connect(buttonAddImage, &QPushButton::clicked, this, &CaptionManager::newEntry);
     }
 
     {
-        auto icon = QIcon::fromTheme("document-save");
+        auto icon = QIcon::fromTheme("document-save", QIcon(":/resources/document-save.svg"));
         buttonSaveImage->setIcon(icon);
         connect(buttonSaveImage, &QPushButton::clicked, this, &CaptionManager::saveEntry);
     }
 
     {
-        auto icon = QIcon::fromTheme("edit-find");
+        auto icon = QIcon::fromTheme("edit-find", QIcon(":/resources/edit-find.svg"));
         buttonFilterImageList->setIcon(icon);
         connect(buttonFilterImageList, &QPushButton::clicked, this, &CaptionManager::filterEntries);
         buttonFilterImageList->setCheckable(true);

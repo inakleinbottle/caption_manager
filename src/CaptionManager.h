@@ -76,7 +76,6 @@ private:
     QDataWidgetMapper* mapper;
     QGraphicsScene* scene;
 
-
     // UI elements
     QWidget* centralWidget;
     QHBoxLayout* mainLayout;
@@ -95,8 +94,6 @@ private:
     QPushButton* buttonFilterImageList;
     QPushButton* buttonSaveImage;
     QPushButton* buttonEditImageTags;
-
-
 
     QMenuBar* menuBar;
     QMenu* menuFile;

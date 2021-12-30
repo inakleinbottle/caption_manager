@@ -23,7 +23,9 @@ add_executable(caption_manager
         src/TagEditorDialog.cpp
         src/TagEditorDialog.h
         src/FilterDialog.cpp
-        src/FilterDialog.h)
+        src/FilterDialog.h
+        src/caption_manager.qrc
+        )
 
 
 target_link_libraries(caption_manager PRIVATE

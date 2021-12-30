@@ -1,0 +1,14 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource>
+        <file>resources/application-exit.svg</file>
+        <file>resources/document-new.svg</file>
+        <file>resources/document-save.svg</file>
+        <file>resources/edit-delete.svg</file>
+        <file>resources/edit-find.svg</file>
+        <file>resources/edit-undo.svg</file>
+        <file>resources/help-about.svg</file>
+        <file>resources/list-add.svg</file>
+        <file>resources/list-remove.svg</file>
+    </qresource>
+</RCC>
